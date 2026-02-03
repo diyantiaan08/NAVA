@@ -17,6 +17,14 @@ function saveFaq(data) {
   fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+// Normalize answer newlines and provide alternate formats for FE rendering
+function formatAnswer(text) {
+  const raw = (text || '');
+  const normalized = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  const plain = normalized.replace(/\n/g, ' ');
+  return { jawaban: plain };
+}
+
 // Endpoint: tambah pertanyaan ke kategori
 app.post('/faq/add', (req, res) => {
   const { kategori, pertanyaan, jawaban } = req.body;
@@ -112,7 +120,8 @@ app.post('/faq/ask', async (req, res) => {
     if (final.score < threshold) {
       return res.status(404).json({ error: 'Maaf, kami belum menemukan jawaban yang sesuai. Silakan coba pertanyaan lain atau pilih kategori yang tersedia.' });
     }
-    res.json({ jawaban: final.payload.jawaban, pertanyaan: final.payload.pertanyaan, score: final.score });
+    const formatted = formatAnswer(final.payload.jawaban);
+    res.json({ pertanyaan: final.payload.pertanyaan, score: final.score, jawaban: formatted.jawaban });
   } catch (err) {
     res.status(500).json({ error: 'Gagal query ke Qdrant', detail: err.message });
   }

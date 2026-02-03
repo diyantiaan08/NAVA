@@ -14,6 +14,14 @@ function loadFaq() {
   return JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8'));
 }
 
+// Normalize answer newlines and provide alternate formats for FE rendering
+function formatAnswer(text) {
+  const raw = (text || '');
+  const normalized = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  const plain = normalized.replace(/\n/g, ' ');
+  return { jawaban: plain };
+}
+
 // Fungsi fuzzy match sederhana
 function findBestMatch(pertanyaanUser, daftarFaq) {
   const stringSimilarity = require('string-similarity');
@@ -55,8 +63,9 @@ app.post('/faq/ask', (req, res) => {
   if (!match) {
     return res.status(404).json({ error: 'Pertanyaan tidak ditemukan atau tidak mirip' });
   }
-  // Kembalikan juga pertanyaan dan skor similarity untuk debug
-  res.json({ jawaban: match.jawaban, pertanyaan: match.pertanyaan, score: match.score });
+  // Kembalikan pertanyaan, skor, dan jawaban yang sudah dinormalisasi
+  const formatted = formatAnswer(match.jawaban);
+  res.json({ pertanyaan: match.pertanyaan, score: match.score, jawaban: formatted.jawaban });
 });
 
 module.exports = app;
