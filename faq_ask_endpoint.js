@@ -16,27 +16,27 @@ function loadFaq() {
 
 // Fungsi fuzzy match sederhana
 function findBestMatch(pertanyaanUser, daftarFaq) {
-  pertanyaanUser = pertanyaanUser.toLowerCase();
-  let best = null;
-  let bestScore = 0;
-  for (const item of daftarFaq) {
-    const q = item.pertanyaan.toLowerCase();
-    let score = 0;
-    if (q === pertanyaanUser) score = 100;
-    else if (q.includes(pertanyaanUser) || pertanyaanUser.includes(q)) score = 80;
-    else {
-      // Skor berdasarkan jumlah kata yang sama
-      const qWords = new Set(q.split(' '));
-      const userWords = new Set(pertanyaanUser.split(' '));
-      const intersection = [...qWords].filter(x => userWords.has(x));
-      score = intersection.length * 10;
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      best = item;
-    }
+  const stringSimilarity = require('string-similarity');
+  pertanyaanUser = pertanyaanUser.toLowerCase().trim();
+  // Normalisasi pertanyaan FAQ dan user: lowercase, trim, hilangkan spasi ganda
+  function normalize(str) {
+    return str.toLowerCase().replace(/\s+/g, ' ').trim();
   }
-  return bestScore >= 30 ? best : null; // threshold
+  const normUser = normalize(pertanyaanUser);
+  const faqQuestions = daftarFaq.map(item => normalize(item.pertanyaan));
+  // Prioritas exact match setelah normalisasi
+  const exactIdx = faqQuestions.findIndex(q => q === normUser);
+  if (exactIdx !== -1) {
+    return { ...daftarFaq[exactIdx], score: 1 };
+  }
+  // Jika tidak ada exact match, pakai similarity
+  const matches = stringSimilarity.findBestMatch(pertanyaanUser, faqQuestions);
+  const bestIndex = matches.bestMatchIndex;
+  const bestScore = matches.bestMatch.rating;
+  if (bestScore >= 0.8) {
+    return { ...daftarFaq[bestIndex], score: bestScore };
+  }
+  return null;
 }
 
 // Endpoint POST /faq/ask
@@ -46,7 +46,8 @@ app.post('/faq/ask', (req, res) => {
     return res.status(400).json({ error: 'kategori dan pertanyaan wajib diisi' });
   }
   const data = loadFaq();
-  const kat = data.find(k => k.kategori === kategori);
+  // Cari kategori secara case-insensitive
+  const kat = data.find(k => k.kategori.toLowerCase() === kategori.toLowerCase());
   if (!kat) {
     return res.status(404).json({ error: 'Kategori tidak ditemukan' });
   }
@@ -54,7 +55,8 @@ app.post('/faq/ask', (req, res) => {
   if (!match) {
     return res.status(404).json({ error: 'Pertanyaan tidak ditemukan atau tidak mirip' });
   }
-  res.json({ jawaban: match.jawaban });
+  // Kembalikan juga pertanyaan dan skor similarity untuk debug
+  res.json({ jawaban: match.jawaban, pertanyaan: match.pertanyaan, score: match.score });
 });
 
 module.exports = app;

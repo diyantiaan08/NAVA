@@ -75,7 +75,9 @@ app.post('/faq/ask', async (req, res) => {
     return res.status(400).json({ error: 'kategori dan pertanyaan wajib diisi' });
   }
   try {
-    const embedding = await getEmbedding(pertanyaan);
+    // Normalisasi pertanyaan untuk membuat hasil tidak sensitif huruf besar/kecil
+    const normalizedQuestion = (pertanyaan || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const embedding = await getEmbedding(normalizedQuestion);
     const results = await searchQdrant(embedding, kategori.toUpperCase());
     if (!results.length) {
       return res.status(404).json({ error: 'Jawaban tidak ditemukan di Qdrant' });
@@ -84,9 +86,13 @@ app.post('/faq/ask', async (req, res) => {
     const topResults = results.slice(0, 5);
     const threshold = 0.6;
     // Jika pertanyaan user mengandung 'fungsi' atau 'buat apa', prioritaskan hasil yang mengandung 'fungsi' atau 'kegunaan'
-    const lowerQ = pertanyaan.toLowerCase();
+    const lowerQ = normalizedQuestion;
     let final = topResults[0];
-    if (lowerQ.includes('fungsi') || lowerQ.includes('buat apa')) {
+    // Preferensi berdasarkan kata kunci dominan
+    if (lowerQ.includes('margin')) {
+      const marginResult = topResults.find(r => r.payload.pertanyaan.toLowerCase().includes('margin'));
+      if (marginResult) final = marginResult;
+    } else if (lowerQ.includes('fungsi') || lowerQ.includes('buat apa')) {
       const fungsiResult = topResults.find(r =>
         r.payload.pertanyaan.toLowerCase().includes('fungsi') ||
         r.payload.pertanyaan.toLowerCase().includes('kegunaan')
@@ -94,15 +100,17 @@ app.post('/faq/ask', async (req, res) => {
       if (fungsiResult) final = fungsiResult;
     } else {
       // Fuzzy match di top-5
+      // Gunakan perbandingan case-insensitive & normalisasi spasi
+      const normalize = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
       const pertanyaanList = topResults.map(r => r.payload.pertanyaan);
-      const fuzzy = stringSimilarity.findBestMatch(pertanyaan, pertanyaanList);
+      const fuzzy = stringSimilarity.findBestMatch(normalize(lowerQ), pertanyaanList.map(q => normalize(q)));
       const idx = fuzzy.bestMatchIndex;
       if (topResults[idx].score >= threshold || fuzzy.bestMatch.rating >= 0.5) {
         final = topResults[idx];
       }
     }
     if (final.score < threshold) {
-      return res.status(404).json({ error: 'Tidak ada jawaban relevan (semantic/fuzzy)' });
+      return res.status(404).json({ error: 'Maaf, kami belum menemukan jawaban yang sesuai. Silakan coba pertanyaan lain atau pilih kategori yang tersedia.' });
     }
     res.json({ jawaban: final.payload.jawaban, pertanyaan: final.payload.pertanyaan, score: final.score });
   } catch (err) {
