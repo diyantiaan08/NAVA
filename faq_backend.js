@@ -143,7 +143,9 @@ app.post('/faq/ask', async (req, res) => {
     const toLower = s => (s || '').toLowerCase();
     const canonicalize = s => s
       .replace(/\bstock\b/g, 'stok')
-      .replace(/\bmargin penjualan\b/g, 'penjualan margin');
+      .replace(/\bmargin penjualan\b/g, 'penjualan margin')
+      .replace(/\bmelihat\b/g, 'lihat')
+      .replace(/\bgimana\b/g, 'bagaimana');
     const normalizeFull = s => canonicalize(normalizeSpaces(stripPunct(toLower(s))));
 
     const normalizedQuestion = normalizeSpaces(toLower(pertanyaan || ''));
@@ -167,13 +169,17 @@ app.post('/faq/ask', async (req, res) => {
       return res.status(404).json({ error: 'Maaf, belum ada jawaban.' });
     }
     if (katObj && Array.isArray(katObj.faq)) {
-      // Early rule-based override: prefer 'Informasi...' when user asks 'lihat/informasi' about margin
-      const qTokensEarly = normalizeFull(normalizedQuestion).split(' ');
-      const wantsInfoEarly = qTokensEarly.includes('lihat') || qTokensEarly.includes('informasi') || qTokensEarly.includes('ditampilkan');
-      if (wantsInfoEarly) {
+      // Early rule-based override: prefer Q dengan 'informasi/ditampilkan' yang memuat semua token topik dari query
+      const stopEarly = new Set(['yang','atau','dari','dalam','pada','untuk','dengan','apa','saja','anda','dan','di','ke','ini','itu','bagaimana','gimana','cara']);
+      const allTokensEarly = normalizeFull(normalizedQuestion).split(' ');
+      const qTokensEarly = allTokensEarly.filter(t => t.length >= 3 && !stopEarly.has(t));
+      const wantsInfoEarly = allTokensEarly.includes('lihat') || allTokensEarly.includes('informasi') || allTokensEarly.includes('ditampilkan');
+      if (wantsInfoEarly && qTokensEarly.length) {
         const preferredEarly = katObj.faq.find(f => {
           const qn = normalizeFull(f.pertanyaan);
-          return qn.includes('informasi') && (qn.includes('penjualan margin') || qn.includes('margin'));
+          if (!(qn.includes('informasi') || qn.includes('ditampilkan'))) return false;
+          // kandidat harus memuat semua token topik dari query (mis. 'stok', 'jual')
+          return qTokensEarly.every(tok => qn.includes(tok));
         });
         if (preferredEarly) {
           const formattedPref = formatAnswer(preferredEarly.jawaban);
@@ -280,12 +286,13 @@ app.post('/faq/ask', async (req, res) => {
         .slice(0, 50);
     }
 
-    // Rule-based override: if user asks "lihat/informasi" about margin, prefer info-style question
+    // Rule-based override (umum): prefer Q 'informasi/ditampilkan' yang memuat semua token topik dari query
     const queryWantsInfo = queryTokens.includes('lihat') || queryTokens.includes('informasi') || queryTokens.includes('ditampilkan');
-    if (queryWantsInfo && katObj && Array.isArray(katObj.faq)) {
+    if (queryWantsInfo && queryTokens.length && katObj && Array.isArray(katObj.faq)) {
       const preferred = katObj.faq.find(f => {
         const qn = normalize(f.pertanyaan);
-        return qn.includes('informasi') && (qn.includes('penjualan margin') || qn.includes('margin'));
+        if (!(qn.includes('informasi') || qn.includes('ditampilkan'))) return false;
+        return queryTokens.every(tok => qn.includes(tok));
       });
       if (preferred) {
         const formattedPref = formatAnswer(preferred.jawaban);
