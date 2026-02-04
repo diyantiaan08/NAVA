@@ -1151,6 +1151,10 @@
       {
         "pertanyaan": "Apakah barcode yang sudah digunakan bisa dipakai kembali?",
         "jawaban": "Barcode yang digunakan pada barang kemudian dilakukan transaksi penjualan tidak dapat digunakan lagi untuk Transaksi Penjualan selanjutnya."
+      },
+      {
+        "pertanyaan": "laporan pindah barang untuk apa?",
+        "jawaban": "Laporan Pindah Barang adalah laporan yang digunakan untuk mencatat dan menampilkan informasi tentang barang-barang yang dipindahkan dari satu tempat ke tempat lain yang didapatkan dari aktivitas transaksi pindah barang maupun pindah barang satu baki. Tujuannya adalah untuk melacak dan mengatur perpindahan barang pada toko Anda. Laporan ini membantu Anda melihat riwayat perpindahan barang, memastikan stok barang yang tepat di setiap tempat."
       }
     ]
   },
@@ -2384,63 +2388,7 @@
       }
     ]
   },
-  {
-    "kategori": "nan",
-    "faq": [
-      {
-        "pertanyaan": "nan",
-        "jawaban": "2. Klik tombol “+”."
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "3. Kemudian system akan menampilkan form dengan beberapa inputan yang harus Anda isi, seperti:"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "- User id : User id atau kode user"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "- Username : Nama user yang dipakai untuk mengakses program"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "- Level : Anda dapat memilih level, seperti: Admin, Owner, Kasir, dan Supervisor"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "- Password : Kata sandi Anda untuk mengakses program"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "4. Jika data sudah benar dan terisi semua, klik tombol “Simpan Data”."
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "Berikut langkah-langkahnya:"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "1. Masuk ke Menu Transaksi Penjualan."
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "2. Klik tombol “Data Barang” pada barang yang ingin diperbarui fotonya."
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "3. Pada form yang muncul, Anda dapat:"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "- Mengunggah gambar dari penyimpanan perangkat melalui tombol “Pilih Gambar”, atau"
-      },
-      {
-        "pertanyaan": "nan",
-        "jawaban": "- Mengambil foto langsung menggunakan kamera (WebCam) melalui tombol “WebCam”."
-      }
-    ]
-  },
+  
   {
     "kategori": "MASTER",
     "faq": [
