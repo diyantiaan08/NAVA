@@ -14,7 +14,7 @@ function loadFaq() {
   return JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8'));
 }
 
-// Normalize answer newlines and provide alternate formats for FE rendering
+// Normalize answer newlines to spaces (previous behavior)
 function formatAnswer(text) {
   const raw = (text || '');
   const normalized = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
@@ -25,11 +25,12 @@ function formatAnswer(text) {
 // Fungsi fuzzy match sederhana
 function findBestMatch(pertanyaanUser, daftarFaq) {
   const stringSimilarity = require('string-similarity');
-  pertanyaanUser = pertanyaanUser.toLowerCase().trim();
-  // Normalisasi pertanyaan FAQ dan user: lowercase, trim, hilangkan spasi ganda
-  function normalize(str) {
-    return str.toLowerCase().replace(/\s+/g, ' ').trim();
-  }
+  // Normalisasi pertanyaan FAQ dan user: lowercase, hapus tanda baca, trim, hilangkan spasi ganda
+  const normalize = (str) => (str || '')
+    .toLowerCase()
+    .replace(/[\?\.!,:;"'()\[\]{}]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   const normUser = normalize(pertanyaanUser);
   const faqQuestions = daftarFaq.map(item => normalize(item.pertanyaan));
   // Prioritas exact match setelah normalisasi
@@ -38,7 +39,7 @@ function findBestMatch(pertanyaanUser, daftarFaq) {
     return { ...daftarFaq[exactIdx], score: 1 };
   }
   // Jika tidak ada exact match, pakai similarity
-  const matches = stringSimilarity.findBestMatch(pertanyaanUser, faqQuestions);
+  const matches = stringSimilarity.findBestMatch(normUser, faqQuestions);
   const bestIndex = matches.bestMatchIndex;
   const bestScore = matches.bestMatch.rating;
   if (bestScore >= 0.8) {

@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "main": "faq_backend.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node faq_backend.js",
+    "start:qwen": "OLLAMA_MODEL=qwen3:1.7b node faq_backend.js",
+    "health": "curl -s http://localhost:3000/health/ollama",
+    "embed:service:st": "python3 embedding_service.py",
+    "embed:service:ollama": "USE_OLLAMA_EMBED=1 OLLAMA_EMBED_MODEL=nomic-embed-text python3 embedding_service.py",
+    "embed:index:st": "python3 embed_and_index_qdrant.py",
+    "embed:index:ollama": "USE_OLLAMA_EMBED=1 OLLAMA_EMBED_MODEL=nomic-embed-text python3 embed_and_index_qdrant.py"
   },
   "keywords": [],
   "author": "",
